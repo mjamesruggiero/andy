@@ -8,10 +8,6 @@
 (defmacro wcar* [& body]
   `(car/wcar server1-conn ~@body))
 
-(wcar*
- (car/set "account" "wellsfargo")
- (car/get "account"))
-
 (def ^:dynamic *ONE-WEEK-IN-SECONDS* (* 7 86400))
 
 (def ^:dynamic *VOTE-SCORE* 432)
@@ -64,9 +60,3 @@
         order "score:"
         ids (wcar* (car/zrevrange order start end))]
     (map #((wcar* car/hgetall) %) ids)))
-
-
-(defn remove-all-keys []
-  (let [globs ["time:*" "voted:*" "score:*" "article:*" "group:*"]
-        keys (mapcat #(wcar* (car/keys %)) globs)]
-    (map #(wcar* (car/del %)) keys)))
