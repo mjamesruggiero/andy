@@ -10,11 +10,17 @@
 (defmacro wcar* [& body]
   `(car/wcar test-conn ~@body))
 
-(defn remove-all-keys []
+(defn clean-database []
   (let [globs ["time:*" "voted:*" "score:*" "article:*" "group:*"]
-        keys (mapcat #(wcar* (car/keys %)) globs)]
-    (println (str "keys are" (str/join keys)))
-    (map #(wcar* (car/del %)) keys)))
+        dead-keys (flatten (map #(wcar* (car/keys %)) globs))]
+        kill-key (fn [k] (wcar* (car/del k)))
+    (doseq [k dead-keys] (kill-key k))))
+
+(defn each-fixture [f]
+  (f)
+  (clean-database))
+
+(use-fixtures :each each-fixture)
 
 (deftest test-post-article
   (testing "article - posting it generates a hash"
@@ -27,6 +33,5 @@
                     "link" "http://www.example.com"
                     "poster" "fake-user"
                     "time" (str (article/now-in-seconds))
-                    "votes" "1"]
-          _ (remove-all-keys)]
+                    "votes" "1"]]
       (is (= returned expected)))))
