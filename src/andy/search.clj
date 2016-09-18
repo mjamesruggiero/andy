@@ -3,6 +3,12 @@
             [clojure.string :as str]
             [clojure.set :as set]))
 
+(def server1-conn
+  {:spec {:host "127.0.0.1" :port 6379}})
+
+(defmacro wcar* [& body]
+  `(car/wcar server1-conn ~@body))
+
 (defn segment-words [text]
   (re-seq #"[a-z']+" (str/lower-case text)))
 
@@ -21,3 +27,9 @@
   (let [words (segment-words content)
         word-set (into #{} words) ]
     (set/difference word-set stopwords)))
+
+(defn index-document
+  [document-id content]
+  (let [words (tokenize content *STOP-WORDS*)]
+    (for [w words]
+      (wcar* (car/sadd (str "idx:" w) document-id)))))
